@@ -19,7 +19,12 @@
 set -euo pipefail
 
 COMMAND="${1:-full}"
-OUT_DIR="$HOME/Drive/system-state"
+if mountpoint -q "$HOME/Drive"; then
+    OUT_DIR="$HOME/Drive/system-state"
+else
+    OUT_DIR="$HOME/.local/state/littlebear-snapshots"
+    echo "  ⚠ ~/Drive not mounted — snapshot → local, mount point left clean" >&2
+fi
 DATE=$(date +%Y-%m-%d_%H%M%S)
 OUTFILE="$OUT_DIR/snapshot-$DATE.json"
 
@@ -143,6 +148,7 @@ def mod_configs():
         "~/.config/hypr/core/animations.lua",
         "~/.config/hypr/scripts/close-at-cursor.sh",
         "~/.config/hypr/scripts/wallpaper-cycle.sh",
+        "~/.config/nvim/init.lua",
         "~/.config/kitty/kitty.conf",
         "~/.config/gtk-3.0/bookmarks",
         "~/.config/hypr/hyprlock.conf",
@@ -222,7 +228,7 @@ def mod_errors():
 
 def mod_processes():
     """Check if expected autostart processes are running."""
-    expected = ["waybar", "hypridle", "dunst", "awww"]
+    expected = ["waybar", "hypridle", "dunst", "awww-daemon"]
     results = {}
     for proc in expected:
         r = cmd(["pgrep", "-x", proc])
@@ -340,7 +346,7 @@ if isinstance(stale_list, list):
     dirty = len([s for s in stale_list if s.get("exists")])
     lines.append(f"  Stale files: {dirty} need cleanup")
 
-if isinstance(svcs, list):
+if "services" in snapshot and isinstance(svcs, list):
     lines.append(f"  User services: {len(svcs)} running")
 
 if isinstance(procs, dict):
