@@ -4,7 +4,7 @@
 #   package-diff.sh --bless   set manifest = current state
 set +e
 M="$HOME/.config/package-manifest.txt"; A="$HOME/.config/package-manifest-aur.txt"
-cur(){ pacman -Qe|sort; }; cur_aur(){ pacman -Qm|sort; }
+cur(){ comm -23 <(pacman -Qe|sort) <(pacman -Qm|sort); }; cur_aur(){ pacman -Qm|sort; }
 if [ "$1" = "--bless" ]; then cur>"$M"; cur_aur>"$A"; echo "✓ blessed ($(wc -l<"$M") explicit, $(wc -l<"$A") AUR)"; echo "  commit: git -C ~/.config add package-manifest*.txt && git -C ~/.config commit -m 'bless packages'"; exit 0; fi
 if [ ! -f "$M" ]; then cur>"$M"; cur_aur>"$A"; echo "✓ baseline created ($(wc -l<"$M") explicit, $(wc -l<"$A") AUR)"; echo "  commit: git -C ~/.config add package-manifest*.txt && git -C ~/.config commit -m 'init manifest'"; exit 0; fi
 ADD=$(comm -23 <(cur|cut -d' ' -f1) <(cut -d' ' -f1 "$M")); GONE=$(comm -13 <(cur|cut -d' ' -f1) <(cut -d' ' -f1 "$M"))
