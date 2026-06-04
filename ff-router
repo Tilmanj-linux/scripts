@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+# ff-router — route a URL to the right Firefox profile by domain (arkenfox shunting).
+# Set as the system default browser (ff-router.desktop -> "ff-router %u"). Domains listed in
+# ff-router-domains.txt open in the UNHARDENED profile (resistFingerprinting OFF); everything
+# else opens in the hardened MAIN profile. Lean half of the shunt system; the in-browser
+# one-click switch (firefox-profile-switcher) and the uBlock hard-no guard cover in-page clicks.
+set -u
+
+MAIN_PROFILE="default-release"    # arkenfox-hardened daily profile (profiles.ini Name=)
+UNHARDENED_PROFILE="unhardened"   # RFP-off profile for flagged sites
+
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+RULES="$SCRIPT_DIR/ff-router-domains.txt"
+
+url="${1:-}"
+host="$(printf '%s' "$url" \
+  | sed -E 's#^[a-zA-Z][a-zA-Z0-9+.-]*://##; s#[/?#].*$##; s#^[^@]*@##; s#:[0-9]+$##' \
+  | tr '[:upper:]' '[:lower:]')"
+
+profile="$MAIN_PROFILE"
+if [ -n "$host" ] && [ -r "$RULES" ]; then
+  while IFS= read -r line; do
+    dom="${line%%#*}"; dom="$(printf '%s' "$dom" | tr -d '[:space:]')"
+    [ -z "$dom" ] && continue
+    case "$host" in
+      "$dom"|*."$dom") profile="$UNHARDENED_PROFILE"; break ;;
+    esac
+  done < "$RULES"
+fi
+
+# Concurrent profiles: FF 151 per-profile remoting usually opens a flagged link in the other
+# profile fine while main runs; if not, add --new-instance here (verify during bring-up).
+exec firefox -P "$profile" ${url:+"$url"}

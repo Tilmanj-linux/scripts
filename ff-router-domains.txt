@@ -1,0 +1,19 @@
+# ff-router shunt list — domains opened in the UNHARDENED Firefox profile (resistFingerprinting OFF).
+# One entry per line; matches the domain AND all subdomains. Text after # is ignored.
+# Start minimal — add a site here only when arkenfox/RFP actually breaks it (arkenfox's
+# heavily-commented user.js tells you which pref caused it, so you adjust knowing why).
+
+# Shopping
+amazon.com
+
+# Streaming / DRM (Widevine + canvas/WebGL fingerprint checks)
+hulu.com
+netflix.com
+disneyplus.com
+max.com
+
+# Work / enterprise SSO (aggressive device fingerprinting)
+workday.com
+myworkday.com
+
+# Banking — add yours here:
