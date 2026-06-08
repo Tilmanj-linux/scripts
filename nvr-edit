@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+# nvr-edit — A6: route $EDITOR through neovim-remote (nvr) so files/buffers
+# aggregate as tabs in ONE nvim instance instead of spawning nested editors.
+#
+# Blocking (waits for the buffer to close) → correct as $EDITOR / $VISUAL /
+# git core.editor for `git commit`, `crontab -e`, etc.
+# Falls back to a fresh nvim listening on the shared socket if none is running,
+# so the first invocation also seeds the instance future tabs attach to.
+set -u
+sock="${NVR_SOCKET:-${XDG_RUNTIME_DIR:-/tmp}/nvim-main.sock}"
+
+if nvr --servername "$sock" --serverlist 2>/dev/null | grep -q .; then
+  # live server → open as a tab and block until it's closed (bufhidden=wipe signals done)
+  exec nvr --servername "$sock" --remote-tab-wait-silent +'set bufhidden=wipe' "$@"
+else
+  [ -S "$sock" ] && rm -f "$sock"   # clear a stale socket left by a crashed nvim
+  exec nvim --listen "$sock" "$@"   # seed the shared instance (foreground = blocks, as $EDITOR must)
+fi
