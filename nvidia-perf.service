@@ -1,0 +1,16 @@
+[Unit]
+# A24 / Path A — GPU safe performance tuning (no overclock; just unlocks the
+# full board power budget + keeps the driver resident). Reversible: disable the
+# unit and reboot (or `nvidia-smi -pl 285 -pm 0`) to restore stock.
+Description=NVIDIA performance tuning (persistence mode + power limit 366W)
+After=multi-user.target
+Wants=multi-user.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/bin/nvidia-smi -pm 1
+ExecStart=/usr/bin/nvidia-smi -pl 366
+
+[Install]
+WantedBy=multi-user.target
